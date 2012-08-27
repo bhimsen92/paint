@@ -1,0 +1,94 @@
+<html>
+    <head>
+        <style type="text/css">
+            canvas{
+                border:1px solid black;
+            }
+            
+        </style>
+        <script type="text/javascript" src="../jquery.js"></script>
+        <script type="text/javascript" src="shape.js"></script>
+        <script type="text/javascript">
+            var Constants = { gravity : 0.5 };
+            var on_line = undefined;
+            var lines = Array();
+            $( document ).ready( function(){
+                var can = $( "#mycan" );
+                var width = can.width(), height = can.height();
+                var ctx = can.get(0).getContext( "2d" );
+                
+                $( "#mycan" ).mousedown( function( e ){
+                    // get the mouse coordinates with respect to canvas.
+                    var mX = e.pageX - this.offsetLeft, mY = e.pageY - this.offsetTop;
+                    var len = lines.length;
+                    var bx1, bx2, by1, by2, obj;
+                    if( len > 0 && on_line == undefined ){
+                        for( var i = 0; i < len; i++ ){
+                            obj = lines[ i ];
+                            bx1 = obj.x2 - 2;
+                            bx2 = obj.x2 + 2;
+                            by1 = obj.y2 - 2;
+                            by2 = obj.y2 + 2;
+                            if( mX >= bx1 && mX <= bx2 && mY >= by1 && mY <= by2 ){
+                                on_line = i;
+                                console.log( "hurr" );
+                                break;
+                            }
+                        }
+                    }
+                    if( on_line == undefined ){
+                        // creating a new line.
+                        lines.push( new Line( { x1 : mX, y1 : mY, width : 1 } ) );
+                        on_line = lines.length - 1;
+                    }
+                });
+                $( "#mycan" ).mousemove( function( e ){
+                    var mX = e.pageX - this.offsetLeft, mY = e.pageY - this.offsetTop;
+                    var len = lines.length;
+                    // bound variables. 
+                    var bx1, bx2, by1, by2, obj;                    
+                    if( on_line != undefined ){
+                        $(this).css( "cursor", "text" );                    
+                        lines[ on_line ].extend( mX, mY );
+                    }
+                    else if( len > 0 ){
+                        for( var i = 0; i < len; i++ ){
+                            obj = lines[ i ];
+                            bx1 = obj.x2 - 2;
+                            bx2 = obj.x2 + 2;
+                            by1 = obj.y2 - 2;
+                            by2 = obj.y2 + 2;                     
+                            if( mX >= bx1 && mX <= bx2 && mY >= by1 && mY <= by2 ){
+                                ctx.fillRect( bx1 - 3 , by1 - 3, 15, 15 ); 
+                                $(this).css( "cursor", "text" );
+                                break;
+                            }
+                        }
+                    }
+                });
+                $( "#mycan" ).mouseup( function( e ){
+                    on_line = undefined;
+                    $( "#mycan" ).css( "cursor", "default" );
+                });
+                function animate(){
+                    clear();
+                    draw();
+                    setTimeout( animate, 33 );
+                }
+                function clear(){
+                    ctx.clearRect( 0, 0, width, height );
+                }
+                function draw(){
+                    var i;
+                    for( i = 0; i < lines.length; i++ ){
+                        lines[ i ].draw( ctx );
+                    }
+                }
+                animate();
+             });
+        </script>
+    </head>
+    <body>
+        <canvas id="mycan" width="1330" height="600"></canvas>
+    </body>    
+</html>

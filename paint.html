@@ -1,0 +1,220 @@
+<html>
+    <head>
+        <style type="text/css">
+            div#header_{
+                height: 95px;
+                padding: 10px 0;
+                background-color: #DDDBDB;
+                background: rgba(221, 219, 219, .9);
+                border-bottom: 1px solid white;
+                text-align: left;
+            }
+            div#header_ p#top{
+                padding:10px;
+                margin-left:5px;
+                margin-top:5px;
+                font-size:300%;
+            }        
+            div#header{
+                font-size:50px;
+/*                font-family:;*/
+                position:relative;
+                top:20px;
+                left:217px;
+                width:300px;
+            }
+            canvas{
+                border:1px solid gold;
+                margin-left:70px;
+                margin-top:30px;
+            }
+            div#paint_box{
+                position:relative;
+                /*top:-5px;*/
+            }
+            div#toolbox{
+                position:absolute;
+                right:140px;
+                top:25px;
+            }
+            div#toolbox a{
+                text-decoration:none;
+                display:block;
+                margin-bottom: 5px;
+                padding:3px;
+            }
+            div#color_tray{               
+                position:relative;
+                left:221px;
+                top:540px;
+                width:200px;
+            }
+            div#color_tray .tray{
+                width:15px;
+                height:15px;
+                float:left;
+            }
+            div#red{
+                background-color:red;
+            }
+            div#white{
+                background-color:white;
+            }
+            div#black{
+                background-color:black;
+            }
+            div#yellow{
+                background-color:yellow;
+            }
+            div#blue{
+                background-color:blue;
+            }
+            div#cyan{
+                background-color:cyan;
+            }
+            div#purple{
+                background-color:purple;
+            }
+            div#gray{
+                background-color:gray;
+            }
+            div#indigo{
+                background-color:indigo;
+            }
+            div#pink{
+                background-color:#FFC0CB;
+            }
+        </style>
+        <script type="text/javascript" src="../jquery.js"></script>
+        <script type="text/javascript" src="init.js"></script>
+        <script type="text/javascript" src="shape.js"></script>
+        <script type="text/javascript" src="point.js"></script>
+        <script type="text/javascript" src="rectangle.js"></script>
+        <script type="text/javascript" src="line.js"></script>
+        <script type="text/javascript" src="circle.js"></script>
+        <script type="text/javascript" src="path.js"></script>     
+        <script type="text/javascript" src="handler.js"></script>
+        <script type="text/javascript">
+            var active_tool = "select";
+            var mouse_control = undefined;
+//            var 
+            var shapes = new Array();
+            var global_rect = undefined;
+            var global_line = undefined;
+            var select_shape = undefined;
+            var global_point = undefined;
+            var global_circle = undefined;
+            var global_path = undefined;
+            var global_position = new Point(  undefined, undefined ), start = false;
+            
+            $( document ).ready( function(){
+                var can = $( "#mycan" );
+                var width = can.width(), height = can.height();
+                var ctx = can.get(0).getContext( "2d" );     
+                $( "#mycan" ).mousedown( function( e ){
+                    if( active_tool == "rectangle" )
+                        handledown_rectangle( ctx, shapes, this, e );                        
+                    else if( active_tool == "select" ){
+                        mouse_control = true;
+                        handledown_select( ctx, shapes, this, e );
+                    }                    
+                    else if( active_tool == "resize" ){
+                        handledown_resize( ctx, shapes, this, e );
+                        draw_bounds( select_shape.id );
+                    }
+                    else if( active_tool == "line" )
+                        handledown_line( ctx, shapes, this, e );
+                    else if( active_tool == "circle" )
+                        handledown_circle( ctx, shapes, this, e );                  
+                    else if( active_tool == "fhand" )
+                        handledown_fhand( ctx, shapes, this, e );
+                    else if( active_tool == "fill" ){
+                        handledown_fill( ctx, shapes, this, e );                        
+                    }
+                    clear();
+                    draw();             
+                });
+                $( "#mycan" ).mousemove( function( e ){
+                    if( active_tool == "rectangle" )
+                        handlemove_rectangle( ctx, shapes, this, e );                        
+                    else if( active_tool == "select" )
+                        handlemove_select( ctx, shapes, this, e );                        
+                    else if( active_tool == "resize" ){ 
+                        handlemove_resize( ctx, shapes, this, e );
+                        draw_bounds( select_shape.id );
+                    }
+                    else if( active_tool == "line" )
+                        handlemove_line( ctx, shapes, this, e );
+                    else if( active_tool == "circle" )
+                        handlemove_circle( ctx, shapes, this, e );                    
+                    else if( active_tool == "fhand" )
+                        handlemove_fhand( ctx, shapes, this, e );
+                    clear();
+                    draw();                         
+                });
+                
+                $( "#mycan" ).mouseup( function( e ){
+                    // reinitializing the varible.
+                    global_rect = undefined;
+                    mouse_control = false;
+                    global_point = undefined;
+                    global_position.x = global_position.y = undefined;
+                    global_line = undefined;
+                    global_circle = undefined;
+                    start = false;
+                    global_path = undefined;
+                    clear();
+                    draw();                     
+                });
+                
+                /*function animate(){
+                    clear();
+                    draw();
+                    //setTimeout( animate, 60 );
+                }*/
+                function clear(){
+                    ctx.clearRect( 0, 0, width, height );
+                }
+                function draw(){
+                    var i;
+                    for( i = 0; i < shapes.length; i++ ){
+                        shapes[ i ].draw( ctx );
+                    }
+                }
+                init();
+                //animate();                
+             // rough space.
+             });
+        </script>
+    </head>
+    <body>
+        <div id="wrapper">        
+            <div id="header">
+                Paint 1.0
+            </div>
+            <div id="paint_box">
+                <div id="toolbox">
+                    <a href="#" id="circle">Circle</a>
+                    <a href="#" id="fhand">Free Hand Drawing</a>
+                    <a href="#" id="line">Line</a>
+                    <a href="#" id="rect">Rectangle</a>  
+                    <a href="#" id="resize">Resize</a>
+                    <a href="#" id="select">Select</a>
+                </div>       
+                <div id="color_tray">
+                    <div id="black" class="tray" title="black">&nbsp;</div>
+                    <div id="white" class="tray" title="white">&nbsp;</div>
+                    <div id="red" class="tray" title="red">&nbsp;</div>
+                    <div id="yellow" class="tray" title="yellow">&nbsp;</div>
+                    <div id="blue" class="tray" title="blue">&nbsp;</div>
+                    <div id="cyan" class="tray" title="cyan">&nbsp;</div>
+                    <div id="purple" class="tray" title="purple">&nbsp;</div>
+                    <div id="gray" class="tray" title="gray">&nbsp;</div>
+                    <div id="indigo" class="tray" title="indigo">&nbsp;</div>
+                    <div id="pink" class="tray" title="pink">&nbsp;</div>
+                </div>
+           </div>
+      </div>
+         <canvas id="mycan" width="800" height="500"></canvas>      
+    </body>    
+</html>
